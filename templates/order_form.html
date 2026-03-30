@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Form</title>
+</head>
+<body>
+    <h1>Customer Order Form</h1>
+
+    <form action="/submit-order" method="POST">
+        <label>Company Name:</label><br>
+        <input type="text" name="company_name" required><br><br>
+
+        <label>Contact Name:</label><br>
+        <input type="text" name="contact_name" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email"><br><br>
+
+        <label>Phone:</label><br>
+        <input type="text" name="phone"><br><br>
+
+        <label>Product Name:</label><br>
+        <input type="text" name="product_name" required><br><br>
+
+        <label>Quantity:</label><br>
+        <input type="number" name="quantity" required><br><br>
+
+        <label>Note:</label><br>
+        <textarea name="note"></textarea><br><br>
+
+        <button type="submit">Submit Order</button>
+    </form>
+</body>
+</html>

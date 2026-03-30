@@ -1,0 +1,4 @@
+flask
+supabase
+openpyxl
+python-dotenv
