@@ -5,41 +5,22 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 from openpyxl import Workbook
 
-# 🔥 強制指定 .env 路徑（避免讀不到）
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ENV_PATH = os.path.join(BASE_DIR, ".env")
-load_dotenv(dotenv_path=ENV_PATH)
+load_dotenv()
 
 app = Flask(__name__)
 
-# 🔑 讀取環境變數
-SUPABASE_URL = "https://vysechxapfowfddpfnyf.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5c2VjaHhhcGZvd2ZkZHBmbnlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzYwNjEsImV4cCI6MjA5MDQxMjA2MX0._M27e3qJNgwaRFrXcJuHFsNgPOgz2wWSDF2ek-SZdNU"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# 🧪 Debug（先確認有讀到）
-print("ENV PATH =", ENV_PATH)
-print("SUPABASE_URL =", SUPABASE_URL)
-print("SUPABASE_KEY loaded =", bool(SUPABASE_KEY))
-
-# ❗ 如果沒讀到就直接報錯
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("❌ 沒有成功讀到 .env，請檢查 SUPABASE_URL 和 SUPABASE_KEY")
+    raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY")
 
-# 🔗 建立 Supabase 連線
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
-# ======================
-# 🏠 首頁（訂單表單）
-# ======================
 @app.route("/")
 def home():
     return render_template("order_form.html")
 
-
-# ======================
-# 📥 提交訂單
-# ======================
 @app.route("/submit-order", methods=["POST"])
 def submit_order():
     data = {
@@ -59,10 +40,6 @@ def submit_order():
     <a href="/">Back</a>
     """
 
-
-# ======================
-# 📋 查看訂單
-# ======================
 @app.route("/admin/orders")
 def view_orders():
     result = supabase.table("orders").select("*").order("created_at", desc=True).execute()
@@ -102,10 +79,6 @@ def view_orders():
     html += "</table>"
     return html
 
-
-# ======================
-# 📊 匯出 Excel
-# ======================
 @app.route("/export-excel")
 def export_excel():
     result = supabase.table("orders").select("*").order("created_at", desc=True).execute()
@@ -144,9 +117,5 @@ def export_excel():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-
-# ======================
-# 🚀 啟動
-# ======================
 if __name__ == "__main__":
     app.run(debug=True)
