@@ -7,7 +7,7 @@ from openpyxl import Workbook
 
 print("STEP 1: app starting...")
 
-# 🔥 force load .env
+# force load .env
 load_dotenv(dotenv_path=".env")
 
 app = Flask(__name__)
@@ -23,29 +23,28 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ✅ Product categories
 PRODUCT_CATEGORIES = {
     "磁性尺(MagLine)": [
-        "MSK5000AS","MSK5000","LEC100","LEC160","LEC200",
-        "MSA111C","MSA213C","MSK200/1","LE200","LE100/1",
-        "MSK1000","MA503AS","MA564","MA523/1","MA504/1",
-        "OSK20","TS20","MB160","MB500/1","MBA111",
-        "MB200/1","MBA213","MB100/1","PSI500","MBR500","MBR200"
+        "MSK5000AS", "MSK5000", "LEC100", "LEC160", "LEC200",
+        "MSA111C", "MSA213C", "MSK200/1", "LE200", "LE100/1",
+        "MSK1000", "MA503AS", "MA564", "MA523/1", "MA504/1",
+        "OSK20", "TS20", "MB160", "MB500/1", "MBA111",
+        "MB200/1", "MBA213", "MB100/1", "PSI500", "MBR500", "MBR200"
     ],
     "定位驅動器(DriveLine)": [
-        "AG05","WG05","AG03","AG25","AG06","AG24","ETC5000","AG26"
+        "AG05", "WG05", "AG03", "AG25", "AG06", "AG24", "ETC5000", "AG26"
     ],
     "拉繩編碼器(LinearLine)": [
-        "SG5","SG10","SG20","SG30","SG60","SGH10","SGH25","SGHF50"
+        "SG5", "SG10", "SG20", "SG30", "SG60", "SGH10", "SGH25", "SGHF50"
     ],
     "旋轉編碼器(RotoLine)": [
-        "IG06","IH58S15","IG07","IH5828"
+        "IG06", "IH58S15", "IG07", "IH5828"
     ],
     "位置指示器(PositionLine)": [
-        "DA09S","DE10","AP10","AP10T","AP20","AP05",
-        "GS04","DE04","KP09","KP04",
-        "SZ80/1","DE10P","AP10S","DA05/1",
-        "AP20S","DA08","MS500H PL","DK01","KP09P"
+        "DA09S", "DE10", "AP10", "AP10T", "AP20", "AP05",
+        "GS04", "DE04", "KP09", "KP04",
+        "SZ80/1", "DE10P", "AP10S", "DA05/1",
+        "AP20S", "DA08", "MS500H PL", "DK01", "KP09P"
     ]
 }
 
@@ -74,14 +73,24 @@ def submit_order():
     quantity = request.form.get("quantity", "").strip()
     note = request.form.get("note", "").strip()
 
+    print("FORM DATA RECEIVED:")
+    print("customer_name =", customer_name)
+    print("company_name =", company_name)
+    print("phone =", phone)
+    print("email =", email)
+    print("category =", category)
+    print("part_number =", part_number)
+    print("quantity =", quantity)
+    print("note =", note)
+
     if not customer_name or not category or not part_number or not quantity:
         return "Missing required fields", 400
 
     if category not in PRODUCT_CATEGORIES:
-        return "Invalid category", 400
+        return f"Invalid category: {category}", 400
 
     if part_number not in PRODUCT_CATEGORIES[category]:
-        return "Invalid part number", 400
+        return f"Invalid part number: {part_number}", 400
 
     try:
         quantity_value = int(quantity)
@@ -102,65 +111,94 @@ def submit_order():
         "note": note,
     }
 
-    supabase.table("orders").insert(data).execute()
+    print("DATA TO INSERT:")
+    print(data)
 
-    return f"""
-    <html>
-    <body style="font-family: Arial; text-align:center; padding:50px;">
-        <h2 style="color:#0047c6;">Order Submitted</h2>
-        <p>{customer_name} - {part_number} ({quantity_value})</p>
-        <a href="/order">Back</a>
-    </body>
-    </html>
-    """
+    try:
+        result = supabase.table("orders").insert(data).execute()
+        print("SUPABASE INSERT SUCCESS:")
+        print(result)
+
+        return f"""
+        <html>
+        <body style="font-family: Arial; text-align:center; padding:50px;">
+            <h2 style="color:#0047c6;">Order Submitted</h2>
+            <p>{customer_name} - {part_number} ({quantity_value})</p>
+            <a href="/order">Back</a>
+        </body>
+        </html>
+        """
+    except Exception as e:
+        print("SUPABASE INSERT ERROR:")
+        print(str(e))
+        return f"""
+        <html>
+        <body style="font-family: Arial; padding:40px;">
+            <h2 style="color:red;">Database insert failed</h2>
+            <pre>{str(e)}</pre>
+            <a href="/order">Back</a>
+        </body>
+        </html>
+        """, 500
 
 
 @app.route("/admin/orders")
 def view_orders():
-    result = supabase.table("orders").select("*").order("created_at", desc=True).execute()
-    orders = result.data
+    try:
+        result = supabase.table("orders").select("*").order("created_at", desc=True).execute()
+        orders = result.data
 
-    html = "<h2>Orders</h2><table border='1' cellpadding='8'>"
-    html += "<tr><th>Customer</th><th>Part</th><th>Qty</th></tr>"
+        html = "<h2>Orders</h2><table border='1' cellpadding='8'>"
+        html += "<tr><th>Customer</th><th>Part</th><th>Qty</th></tr>"
 
-    for order in orders:
-        html += f"""
-        <tr>
-            <td>{order.get('customer_name')}</td>
-            <td>{order.get('part_number')}</td>
-            <td>{order.get('quantity')}</td>
-        </tr>
-        """
+        for order in orders:
+            html += f"""
+            <tr>
+                <td>{order.get('customer_name')}</td>
+                <td>{order.get('part_number')}</td>
+                <td>{order.get('quantity')}</td>
+            </tr>
+            """
 
-    html += "</table>"
-    return html
+        html += "</table>"
+        return html
+    except Exception as e:
+        return f"<h3>Read orders failed</h3><pre>{str(e)}</pre>", 500
 
 
 @app.route("/export-excel")
 def export_excel():
-    result = supabase.table("orders").select("*").execute()
-    orders = result.data
+    try:
+        result = supabase.table("orders").select("*").execute()
+        orders = result.data
 
-    wb = Workbook()
-    ws = wb.active
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Orders"
 
-    ws.append(["Customer", "Part", "Qty"])
+        ws.append(["Customer", "Part", "Qty"])
 
-    for order in orders:
-        ws.append([
-            order.get("customer_name"),
-            order.get("part_number"),
-            order.get("quantity")
-        ])
+        for order in orders:
+            ws.append([
+                order.get("customer_name"),
+                order.get("part_number"),
+                order.get("quantity")
+            ])
 
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
 
-    return send_file(output, as_attachment=True, download_name="orders.xlsx")
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name="orders.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        return f"<h3>Export failed</h3><pre>{str(e)}</pre>", 500
 
 
-# 🔥 FORCE RUN
 if __name__ == "__main__":
-    print("🚀 Flask is starting...")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    print("Flask is starting...")
+    app.run(host="0.0.0.0", port=5000, debug=True)
