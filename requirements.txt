@@ -2,3 +2,4 @@ flask
 supabase
 openpyxl
 python-dotenv
+gunicorn
